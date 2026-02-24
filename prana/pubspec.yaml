@@ -1,0 +1,68 @@
+name: prana
+description: Power Nap App
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Audio & Video
+  just_audio: ^0.9.35
+  audio_session: ^0.1.10
+  video_player: ^2.8.2
+  flutter_tts: ^4.2.5
+  speech_to_text: ^7.1.0
+  
+  # Firebase
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  
+  # UI & Animation
+  cupertino_icons: ^1.0.2
+  shimmer: ^3.0.0
+  
+  # Utilities
+  intl: ^0.20.2
+  path_provider: ^2.1.0
+  provider: ^6.1.5+1
+  http: ^1.6.0
+  shared_preferences: ^2.3.3
+  
+  # Calendar & Scheduling
+  table_calendar: ^3.0.0
+  
+  # UUID for unique IDs
+  uuid: ^4.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  
+  # Fonts section for color emojis - UPDATED with correct filename
+  fonts:
+    - family: NotoColorEmoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji-Regular.ttf
+  
+  assets:
+    # Audio files
+    - assets/audio/rain.wav
+    - assets/audio/bell1.wav
+    - assets/audio/bell2.wav
+    
+    # Video backgrounds
+    - assets/videos/morning_beach.mp4
+    - assets/videos/midday_beach.mp4
+    - assets/videos/evening_beach.mp4
+    - assets/videos/night_beach.mp4
+    
+    # Realistic sand textures
+    - assets/images/beach_textures/sand_base.jpg
+    - assets/images/beach_textures/sand_normal.jpg

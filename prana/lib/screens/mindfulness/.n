@@ -1,0 +1,29 @@
+import 'package:flutter/material.dart';
+
+class SleepSoundsScreen extends StatelessWidget {
+  const SleepSoundsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A2463),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0A2463),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Sleep Sounds',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: Center(
+        child: Text(
+          'Sleep Sounds Coming Soon!',
+          style: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+      ),
+    );
+  }
+}
