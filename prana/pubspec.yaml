@@ -1,5 +1,5 @@
 name: prana
-description: Power Nap App
+description: Power Nap App - AI Mental Wellness
 version: 1.0.0+1
 
 environment:
@@ -37,6 +37,15 @@ dependencies:
   
   # UUID for unique IDs
   uuid: ^4.0.0
+  
+  # QR and Scanning (for friend features)
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.0
+  image_picker: ^1.1.2
+  share_plus: ^10.0.0
+  cached_network_image: ^3.4.0
+  tab_indicator_styler: ^2.0.0
+  flutter_staggered_animations: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -45,7 +54,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  # Fonts section for color emojis - UPDATED with correct filename
   fonts:
     - family: NotoColorEmoji
       fonts:
@@ -63,6 +71,11 @@ flutter:
     - assets/videos/evening_beach.mp4
     - assets/videos/night_beach.mp4
     
-    # Realistic sand textures
+    # Textures
     - assets/images/beach_textures/sand_base.jpg
     - assets/images/beach_textures/sand_normal.jpg
+    
+    # AI Character assets (create these folders)
+    - assets/characters/
+    - assets/characters/female_psychologist.png
+    - assets/characters/male_mentor.png

@@ -8,7 +8,7 @@
 .buildlog/
 .history
 .svn/
-migrate_working_dir/
+.metadata/
 
 # IntelliJ related
 *.iml
@@ -16,28 +16,108 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VSCode related
+.vscode/
+*.code-workspace
 
-# Flutter/Dart/Pub related
+# Flutter/Dart related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
+flutter_*.png
+linked_*.ds
+unlinked.ds
+unlinked_spec.ds
 
-# Symbolication related
-app.*.symbols
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
 
-# Obfuscation related
-app.*.map.json
+# iOS related
+**/ios/**/Flutter/.last_build_id
+**/ios/**/Flutter/App.framework
+**/ios/**/Flutter/Flutter.framework
+**/ios/**/Flutter/Generated.xcconfig
+**/ios/**/Flutter/ephemeral/
+**/ios/**/Pods/
+**/ios/**/Runner/GeneratedPluginRegistrant.*
+**/ios/**/Runner/GeneratedPluginRegistrant.h
+**/ios/**/Runner/GeneratedPluginRegistrant.m
+**/ios/**/Symbols/
+**/ios/**/Runner/GoogleService-Info.plist
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# macOS related
+**/macos/**/Flutter/ephemeral/
+**/macos/**/Flutter/GeneratedPluginRegistrant.swift
+**/macos/**/Flutter/Flutter-Debug.xcconfig
+**/macos/**/Flutter/Flutter-Release.xcconfig
+**/macos/**/Flutter/Flutter-Profile.xcconfig
+
+# Web related
+**/web/index.html
+**/web/manifest.json
+**/web/icons/
+**/web/favicon.png
+
+# Windows related
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugins.cmake
+
+# Linux related
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugins.cmake
+
+# 🔐 **CRITICAL - ADD THESE FOR API KEYS** 🔐
+# API Keys and Secrets
+lib/constants/api_keys.dart
+lib/constants/secrets.dart
+lib/constants/keys.dart
+**/secrets.dart
+**/keys.dart
+.env
+.env.*
+*.env
+secrets.json
+keys.json
+
+# Firebase configuration (if any)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
+# Private keys and certificates
+*.pem
+*.p12
+*.key
+*.keystore
+key.properties
+upload-keystore.jks
+
+# Environment files
+.env
+.env.dev
+.env.prod
+.env.local
+.env.staging
+
+# Coverage
+coverage/
+*.lcov
+*.info
+
+# Flutter pub
+pubspec.lock

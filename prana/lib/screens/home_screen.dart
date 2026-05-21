@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
             
             // App title
             const Text(
-              "Prana",
+              "PranAI",
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -44,7 +44,7 @@ class HomeScreen extends StatelessWidget {
             
             // Tagline
             const Text(
-              "Mental Fitness for Students",
+              "A Safe Space for Your Mind",
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.grey,

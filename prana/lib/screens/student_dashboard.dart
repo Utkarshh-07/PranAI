@@ -2,6 +2,11 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../features/my_space/my_space_screen.dart';
+import '../widgets/floating_cloud.dart';
+// REMOVE old chat import
+// import 'chat/chat_list_screen.dart';
+// ADD new AI chat import
+import 'ai_chat/ai_home_screen.dart';
 
 // ============ OCEAN COLOR SCHEME ============
 const Color deepOcean = Color(0xFF0A2463);
@@ -755,18 +760,16 @@ class OceanQuickActions extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // AI CHAT BUTTON - REPLACED THE OLD CHAT BUTTON
               _buildQuickAction(
                 context: context,
                 icon: Icons.smart_toy,
-                label: 'AI Chat',
-                creature: '🐬',
+                label: 'AI Friends',
+                creature: '🤖',
                 color: seaTeal,
                 onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/character_selection',
-                    arguments: parentData,
-                  );
+                  // Navigate to AI Home screen
+                  Navigator.pushNamed(context, '/ai_home');
                 },
               ),
               
@@ -1040,9 +1043,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   final List<Widget> _screens = [
     const DashboardContent(), // 0: Dashboard
-    const PlaceholderScreen(title: 'AI Chat'), // 1: AI Chat
+    const PlaceholderScreen(title: 'AI Chat'), // 1: AI Chat (placeholder)
     const PlaceholderScreen(title: 'Mindful'), // 2: Mindful
-    const PlaceholderScreen(title: 'My Space'), // 3: My Space (will be replaced)
+    const PlaceholderScreen(title: 'My Space'), // 3: My Space
     const PlaceholderScreen(title: 'Profile'), // 4: Profile
   ];
 
@@ -1074,13 +1077,21 @@ class _StudentDashboardState extends State<StudentDashboard> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(Icons.dashboard, "Dashboard", "🌊", 0),
-            _buildNavItem(Icons.chat, "AI Chat", "🐬", 1),
+            _buildNavItem(Icons.smart_toy, "AI Chat", "🤖", 1), // Changed from chat to AI
             _buildNavItem(Icons.self_improvement, "Mindful", "🧘", 2),
             _buildNavItem(Icons.calendar_month, "My Space", "📅", 3),
             _buildNavItem(Icons.person, "Profile", "👤", 4),
           ],
         ),
       ),
+      floatingActionButton: const Padding(
+        padding: EdgeInsets.only(bottom: 70, right: 16),
+        child: FloatingCloud(
+          unreadCount: 3,
+          hasUrgent: true,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -1090,16 +1101,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
       onTap: () {
         setState(() => _selectedIndex = index);
         
-        // Handle navigation for specific tabs
-        if (index == 1) { // AI Chat tab
-          Navigator.pushNamed(
-            context,
-            '/character_selection',
-            arguments: widget.parentData,
-          );
-        } else if (index == 2) { // Mindfulness tab
+        if (index == 1) {
+          // Navigate to AI Home screen
+          Navigator.pushNamed(context, '/ai_home');
+        } else if (index == 2) {
           Navigator.pushNamed(context, '/mindfulness_home');
-        } else if (index == 3) { // My Space tab
+        } else if (index == 3) {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1107,7 +1114,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           );
         }
-        // Dashboard (index 0) and Profile (index 4) stay on dashboard
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

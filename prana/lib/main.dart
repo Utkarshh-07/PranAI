@@ -1,6 +1,8 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:prana/screens/ai_chat/api_test_screen.dart';
 import 'package:provider/provider.dart';
 
 // YOUR EXISTING IMPORTS
@@ -11,7 +13,6 @@ import 'package:prana/screens/terms_screen.dart';
 import 'package:prana/screens/parent_contact_screen.dart';
 import 'package:prana/screens/student_dashboard.dart';
 import 'package:prana/screens/mindfulness/mindfulness_home.dart';
-import 'package:prana/screens/ai_chat/character_selection.dart';
 import 'package:prana/screens/parent/parent_dashboard.dart';
 import 'package:prana/screens/prankster_flow/level1_warning.dart';
 import 'package:prana/screens/prankster_flow/level2_winterfell.dart';
@@ -38,13 +39,181 @@ import 'package:prana/features/happy_thoughts/shell_collection/models/shell_mode
 import 'package:prana/providers/auth_provider.dart' as app;
 import 'package:prana/screens/auth/welcome_screen.dart';
 
-// ===== NEW MY SPACE IMPORTS =====
+// ===== MY SPACE IMPORTS =====
 import 'package:prana/features/my_space/my_space_screen.dart';
+import 'package:prana/features/my_space/my_rhythm_screen.dart';
+
+// ===== CHAT IMPORTS =====
+import 'package:prana/screens/chat/chat_hub_screen.dart';
+import 'package:prana/screens/chat/friend_chat_screen.dart';
+import 'package:prana/screens/chat/group_chat_screen.dart';
+import 'package:prana/screens/chat/add_friend_screen.dart';
+import 'package:prana/screens/chat/create_group_screen.dart';
+
+// ===== NEW AI CHAT IMPORTS =====
+import 'package:prana/screens/ai_chat/ai_chat_home.dart';
+import 'package:prana/screens/ai_chat/ai_character_creator.dart';
+import 'package:prana/screens/ai_chat/ai_chat_interface.dart' as chat;
+import 'package:prana/screens/ai_chat/ai_video_interface.dart' as video;
+
+// ===== FRIEND REQUEST SERVICE =====
+import 'package:prana/services/friend_request_service.dart';
+
+// ===== FUNCTION TO CREATE TEST USERS =====
+Future<void> _createTestUsers() async {
+  try {
+    print('📝 Checking if users exist...');
+    final snapshot = await FirebaseFirestore.instance.collection('users').get();
+    
+    if (snapshot.docs.isEmpty) {
+      print('📝 Creating test users...');
+      
+      // Create Utkarsh
+      await FirebaseFirestore.instance.collection('users').doc('user_utkarsh').set({
+        'uid': 'user1',
+        'username': 'Utkarsh',
+        'avatar': '💗',
+        'email': 'utkarsh@test.com',
+        'flow': 15,
+        'isOnline': true,
+        'lastActive': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ Utkarsh created');
+      
+      // Create Hardik
+      await FirebaseFirestore.instance.collection('users').doc('user_hardik').set({
+        'uid': 'user2',
+        'username': 'Hardik',
+        'avatar': '😉',
+        'email': 'hardik@test.com',
+        'flow': 15,
+        'isOnline': true,
+        'lastActive': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ Hardik created');
+      
+      // Create Arya
+      await FirebaseFirestore.instance.collection('users').doc('user_arya').set({
+        'uid': 'user3',
+        'username': 'Arya',
+        'avatar': '😒',
+        'email': 'arya@test.com',
+        'flow': 7,
+        'isOnline': false,
+        'lastActive': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ Arya created');
+      
+      // Create a test chat between Utkarsh and Hardik
+      await FirebaseFirestore.instance.collection('chats').doc('chat_utkarsh_hardik').set({
+        'participants': ['user1', 'user2'],
+        'participantNames': {
+          'user1': 'Utkarsh',
+          'user2': 'Hardik',
+        },
+        'participantAvatars': {
+          'user1': '💗',
+          'user2': '😉',
+        },
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'type': 'private',
+        'unreadCount': {
+          'user1': 0,
+          'user2': 0,
+        },
+        'flow': 15,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ Test chat created');
+      
+      // Add a test message
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc('chat_utkarsh_hardik')
+          .collection('messages')
+          .doc('msg1')
+          .set({
+        'senderId': 'user2',
+        'senderName': 'Hardik',
+        'senderAvatar': '😉',
+        'text': 'Hey Utkarsh! How are you?',
+        'timestamp': FieldValue.serverTimestamp(),
+        'type': 'text',
+        'readBy': ['user2'],
+        'deliveredTo': ['user2'],
+      });
+      print('✅ Test message created');
+      
+      // Create friends subcollection for Utkarsh
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_utkarsh')
+          .collection('friends')
+          .doc('user_hardik')
+          .set({
+        'friendId': 'user2',
+        'friendDocId': 'user_hardik',
+        'friendName': 'Hardik',
+        'friendAvatar': '😉',
+        'status': 'accepted',
+        'since': FieldValue.serverTimestamp(),
+        'chatId': 'chat_utkarsh_hardik',
+        'flow': 15,
+      });
+      
+      // Create friends subcollection for Hardik
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_hardik')
+          .collection('friends')
+          .doc('user_utkarsh')
+          .set({
+        'friendId': 'user1',
+        'friendDocId': 'user_utkarsh',
+        'friendName': 'Utkarsh',
+        'friendAvatar': '💗',
+        'status': 'accepted',
+        'since': FieldValue.serverTimestamp(),
+        'chatId': 'chat_utkarsh_hardik',
+        'flow': 15,
+      });
+      
+      print('✅ Friends subcollections created');
+      
+      // Add friend request collection for testing
+      await FirebaseFirestore.instance.collection('friend_requests').add({
+        'fromUserId': 'user3',
+        'fromUserDocId': 'user_arya',
+        'fromUserName': 'Arya',
+        'fromUserAvatar': '😒',
+        'toUserId': 'user1',
+        'toUserDocId': 'user_utkarsh',
+        'toUserName': 'Utkarsh',
+        'toUserAvatar': '💗',
+        'status': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      print('✅ Test friend request created');
+      
+      print('🎉 All test data created successfully!');
+      
+    } else {
+      print('✅ Users already exist in database');
+      print('📊 Found ${snapshot.docs.length} users');
+    }
+  } catch (e) {
+    print('❌ Error creating test data: $e');
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase with YOUR config
+  // Initialize Firebase
   try {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
@@ -57,6 +226,10 @@ void main() async {
       ),
     );
     print('✅ Firebase initialized successfully');
+    
+    // CREATE TEST USERS AND DATA
+    await _createTestUsers();
+    
   } catch (e) {
     print('❌ Firebase initialization error: $e');
   }
@@ -98,7 +271,18 @@ class PranaApp extends StatelessWidget {
           '/student_dashboard': (context) => StudentDashboard(parentData: null),
           
           // ============ MY SPACE ============
-          '/my_space': (context) => MySpaceScreen(parentData: null),
+          '/my-space': (context) => const MySpaceScreen(),
+          '/my-rhythm': (context) => const MyRhythmScreen(),
+          
+          // ============ CHAT ============
+          '/chat-hub': (context) => const ChatHubScreen(),
+          '/add-friend': (context) => const AddFriendScreen(),
+          '/create-group': (context) => const CreateGroupScreen(),
+          
+          // ============ AI CHAT ============
+          '/ai_home': (context) => const AIChatHome(),
+          '/ai_creator': (context) => const AICharacterCreator(),
+          '/api-test': (context) => const APITestScreen(),
           
           // ============ MINDFULNESS FLOW ============
           '/mindfulness_home': (context) => const MindfulnessHomeScreen(),
@@ -112,9 +296,6 @@ class PranaApp extends StatelessWidget {
           
           // ============ SHELL COLLECTION FEATURES ============
           '/shell_collection': (context) => ShellCollectionHome(),
-          
-          // ============ AI CHAT ============
-          '/character_selection': (context) => CharacterSelectionScreen(parentData: null),
           
           // ============ PARENT ============
           '/parent_dashboard': (context) => const ParentDashboard(
@@ -162,24 +343,53 @@ class PranaApp extends StatelessWidget {
             );
           }
           
-          // My Space with arguments
-          if (settings.name == '/my_space' && settings.arguments != null) {
-            final args = settings.arguments;
+          // Friend Chat with arguments
+          if (settings.name == '/friend-chat') {
+            final args = settings.arguments as Map<String, dynamic>?;
             return MaterialPageRoute(
-              builder: (context) => MySpaceScreen(
-                parentData: args is Map<String, dynamic> ? args : null,
+              builder: (context) => FriendChatScreen(
+                chatId: args?['chatId'] ?? '',
+                friendName: args?['friendName'] ?? '',
+                friendAvatar: args?['friendAvatar'] ?? '👤',
+                friendUid: args?['friendUid'] ?? '',
               ),
             );
           }
           
-          // Character Selection with arguments
-          if (settings.name == '/character_selection' && settings.arguments != null) {
-            final args = settings.arguments;
+          // Group Chat with arguments
+          if (settings.name == '/group-chat') {
+            final args = settings.arguments as Map<String, dynamic>?;
             return MaterialPageRoute(
-              builder: (context) => CharacterSelectionScreen(
-                parentData: args is Map<String, dynamic> ? args : null,
+              builder: (context) => GroupChatScreen(
+                groupId: args?['groupId'] ?? '',
+                groupName: args?['groupName'] ?? 'Group',
+                groupAvatar: args?['groupAvatar'] ?? '👥',
+                memberCount: args?['memberCount'] ?? 0,
+                groupFlow: args?['groupFlow'] ?? 0,
               ),
             );
+          }
+          
+          // AI Chat Interface with arguments
+          if (settings.name == '/ai_chat') {
+            final args = settings.arguments as Map<String, dynamic>?;
+            final character = args?['character'];
+            if (character != null) {
+              return MaterialPageRoute(
+                builder: (context) => chat.AIChatInterface(character: character),
+              );
+            }
+          }
+          
+          // AI Video Interface with arguments
+          if (settings.name == '/ai_video') {
+            final args = settings.arguments as Map<String, dynamic>?;
+            final character = args?['character'];
+            if (character != null) {
+              return MaterialPageRoute(
+                builder: (context) => video.AIVideoInterface(character: character),
+              );
+            }
           }
           
           // PRANKSTER FLOW ROUTES
