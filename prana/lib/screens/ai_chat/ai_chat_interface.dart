@@ -1,9 +1,32 @@
-// lib/screens/ai_chat/ai_chat_interface.dart
+// lib/screens/ai_chat/ai_chat_interface.dart (COMPLETE WITH DEBUG PRINTS)
 import 'package:flutter/material.dart';
 import '../../services/ai_service.dart';
 import '../../models/ai_character_model.dart';
-import '../../models/chat_message_model.dart';
-import '../../widgets/animated_character.dart';
+
+class ChatMessage {
+  final String id;
+  final String role;
+  final String content;
+  final DateTime timestamp;
+
+  ChatMessage({
+    required this.id,
+    required this.role,
+    required this.content,
+    required this.timestamp,
+  });
+
+  bool get isUser => role == 'user';
+
+  factory ChatMessage.create({required String role, required String content}) {
+    return ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      role: role,
+      content: content,
+      timestamp: DateTime.now(),
+    );
+  }
+}
 
 class AIChatInterface extends StatefulWidget {
   final AICharacter character;
@@ -18,18 +41,17 @@ class _AIChatInterfaceState extends State<AIChatInterface> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
-  final AIService _aiService = AIService();
-  
-  bool _isTyping = false;
   bool _isLoading = false;
-  String? _errorMessage;
-  String _currentExpression = 'neutral';
+  
+  // Create service directly
+  late final AIService _aiService;
 
   @override
   void initState() {
     super.initState();
+    _aiService = AIService();
     _addWelcomeMessage();
-    _loadChatHistory();
+    print('✅ AIChatInterface initialized for: ${widget.character.name}');
   }
 
   @override
@@ -40,114 +62,65 @@ class _AIChatInterfaceState extends State<AIChatInterface> {
   }
 
   void _addWelcomeMessage() {
-    final welcomeMessage = ChatMessage.create(
-      role: 'ai',
-      content: 'Hi! I\'m ${widget.character.name}. ${_getPersonalityGreeting()}',
-    );
-    setState(() => _messages.add(welcomeMessage));
-  }
-
-  String _getPersonalityGreeting() {
-    switch (widget.character.id) {
-      case 'ai_1': // Alex - Calm
-        return "I'm here to listen and support you. What's on your mind?";
-      case 'ai_2': // Jordan - Energetic
-        return "So good to see you! Let's have an amazing conversation! 🎉";
-      case 'ai_3': // Taylor - Wise
-        return "I've been looking forward to our chat. What shall we explore today?";
-      case 'ai_4': // Casey - Gentle
-        return "I'm really glad you're here. Take your time, I'm all ears.";
+    String welcomeText;
+    switch (widget.character.voiceType) {
+      case 'calm':
+        welcomeText = "Hi, I'm ${widget.character.name}. I'm here to listen. How are you feeling today? 🧘";
+        break;
+      case 'energetic':
+        welcomeText = "Hey! I'm ${widget.character.name}! So excited to chat with you! What's on your mind? 🎉";
+        break;
+      case 'wise':
+        welcomeText = "Hello. I'm ${widget.character.name}. I'm glad you're here. What shall we discuss today? 🌟";
+        break;
       default:
-        return "How can I help you today?";
+        welcomeText = "Hi! I'm ${widget.character.name}. How can I help you today? 💗";
     }
+    _messages.add(ChatMessage.create(role: 'ai', content: welcomeText));
   }
 
-  Future<void> _loadChatHistory() async {
-    // TODO: Load chat history from local storage if needed
-  }
+  Future<void> _sendMessage() async {
+    if (_messageController.text.trim().isEmpty || _isLoading) {
+      print('⏸️ Cannot send: empty or loading');
+      return;
+    }
 
-  void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty || _isLoading) return;
-
-    final userMessage = _messageController.text;
+    final userMessage = _messageController.text.trim();
+    print('📤 SENDING: "$userMessage"');
     
+    // Add user message
     setState(() {
-      _messages.add(ChatMessage.create(
-        role: 'user',
-        content: userMessage,
-      ));
-      _isTyping = true;
+      _messages.add(ChatMessage.create(role: 'user', content: userMessage));
       _isLoading = true;
-      _errorMessage = null;
-      _currentExpression = 'listening';
     });
-    
     _messageController.clear();
     _scrollToBottom();
 
     try {
-      // Get real AI response from OpenAI
-      final aiResponse = await _aiService.getAIResponse(
-        userMessage, 
-        widget.character
-      );
-
+      print('🔄 Calling Gemini API for: "$userMessage"');
+      final aiResponse = await _aiService.getAIResponse(userMessage, widget.character);
+      print('📥 RECEIVED RESPONSE: "$aiResponse"');
+      
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage.create(
-            role: 'ai',
-            content: aiResponse,
-          ));
-          _isTyping = false;
+          _messages.add(ChatMessage.create(role: 'ai', content: aiResponse));
           _isLoading = false;
-          _currentExpression = _detectEmotion(aiResponse);
         });
       }
     } catch (e) {
+      print('❌ ERROR in _sendMessage: $e');
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage.create(
-            role: 'ai',
-            content: "I'm having trouble connecting right now. Please try again in a moment.",
-            isError: true,
-          ));
-          _isTyping = false;
+          _messages.add(ChatMessage.create(role: 'ai', content: "I'm here for you. What would you like to talk about? 💗"));
           _isLoading = false;
-          _errorMessage = e.toString();
-          _currentExpression = 'concerned';
         });
       }
     }
-    
     _scrollToBottom();
   }
 
-  String _detectEmotion(String response) {
-    final lowerResponse = response.toLowerCase();
-    
-    if (lowerResponse.contains('sorry') || 
-        lowerResponse.contains('tough') || 
-        lowerResponse.contains('hard') ||
-        lowerResponse.contains('sad')) {
-      return 'concerned';
-    } else if (lowerResponse.contains('great') || 
-               lowerResponse.contains('happy') || 
-               lowerResponse.contains('wonderful') ||
-               lowerResponse.contains('🎉') ||
-               lowerResponse.contains('🔥')) {
-      return 'happy';
-    } else if (lowerResponse.contains('think') || 
-               lowerResponse.contains('maybe') || 
-               lowerResponse.contains('consider') ||
-               lowerResponse.contains('perhaps')) {
-      return 'thinking';
-    }
-    
-    return 'neutral';
-  }
-
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -158,13 +131,16 @@ class _AIChatInterfaceState extends State<AIChatInterface> {
     });
   }
 
-  Future<void> _refreshChat() async {
+  void _clearChat() {
     setState(() {
       _messages.clear();
-      _errorMessage = null;
+      _isLoading = false;
     });
     _addWelcomeMessage();
     _aiService.clearHistory(widget.character.id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Chat history cleared')),
+    );
   }
 
   @override
@@ -178,392 +154,198 @@ class _AIChatInterfaceState extends State<AIChatInterface> {
         ),
         title: Row(
           children: [
-            // Animated character avatar
-            SizedBox(
+            Container(
               width: 40,
               height: 40,
-              child: AnimatedCharacter(
-                character: widget.character,
-                expression: _currentExpression,
-                isSpeaking: _isTyping,
-                isListening: _isTyping, gender: '', baseColor: '', eyeColor: '',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.character.name,
-                    style: const TextStyle(
-                      color: Colors.white, 
-                      fontSize: 16, 
-                      fontWeight: FontWeight.bold
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _isTyping ? Colors.orange : Colors.green,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isTyping ? 'thinking...' : 'online',
-                        style: TextStyle(
-                          color: _isTyping ? Colors.orange : Colors.green,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1A1F2F),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _refreshChat,
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white70),
-            onPressed: _showOptions,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_errorMessage != null)
-            Container(
-              padding: const EdgeInsets.all(8),
-              color: Colors.red.shade900.withOpacity(0.3),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Connection issue. Using offline mode.',
-                      style: TextStyle(color: Colors.red.shade200, fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshChat,
-              color: Colors.blue,
-              backgroundColor: const Color(0xFF1A1F2F),
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  return _buildMessageBubble(message);
-                },
-              ),
-            ),
-          ),
-          if (_isTyping) _buildTypingIndicator(),
-          _buildMessageInput(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(ChatMessage message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: [
-          if (!message.isUser) ...[
-            Container(
-              width: 30,
-              height: 30,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Color(int.parse(widget.character.baseColor.replaceFirst('#', '0xFF'))),
-                    const Color(0xFF7B68EE),
-                  ],
+                  colors: [widget.character.baseColorObj, const Color(0xFF7B68EE)],
                 ),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
-                  widget.character.name[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  widget.character.initial,
+                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.character.name,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'AI Friend',
+                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+                ),
+              ],
+            ),
           ],
-          Flexible(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: message.isUser 
-                    ? Colors.blue 
-                    : (message.isError ? Colors.red.shade900 : Colors.grey.shade800),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.content,
-                    style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1A1F2F),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.white70),
+            onPressed: _clearChat,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                final isUser = message.isUser;
+                final timeString = '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}';
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!isUser) ...[
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [widget.character.baseColorObj, const Color(0xFF7B68EE)],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              widget.character.initial,
+                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isUser ? Colors.blue : Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                message.content,
+                                style: const TextStyle(color: Colors.white, fontSize: 15),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                timeString,
+                                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (isUser) ...[
+                        const SizedBox(width: 8),
+                        const CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.blueGrey,
+                          child: Icon(Icons.person, color: Colors.white, size: 20),
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                );
+              },
+            ),
+          ),
+          if (_isLoading)
+            Container(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(widget.character.baseColorObj),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 10,
+                    '${widget.character.name} is typing...',
+                    style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  ),
+                ],
+              ),
+            ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1F2F),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)],
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: _isLoading ? 'Waiting for response...' : 'Type a message...',
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF0A0F1E),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      enabled: !_isLoading,
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _isLoading ? null : _sendMessage,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: _isLoading
+                            ? null
+                            : LinearGradient(
+                                colors: [widget.character.baseColorObj, const Color(0xFF7B68EE)],
+                              ),
+                        color: _isLoading ? Colors.grey.shade700 : null,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isLoading ? Icons.hourglass_empty : Icons.send,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          if (message.isUser) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                color: Colors.blueGrey,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(Icons.person, color: Colors.white, size: 18),
-              ),
-            ),
-          ],
         ],
       ),
     );
-  }
-
-  Widget _buildTypingIndicator() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(int.parse(widget.character.baseColor.replaceFirst('#', '0xFF'))),
-                  const Color(0xFF7B68EE),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                widget.character.name[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade800,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTypingDot(0),
-                const SizedBox(width: 4),
-                _buildTypingDot(150),
-                const SizedBox(width: 4),
-                _buildTypingDot(300),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypingDot(int delay) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + delay),
-      tween: Tween(begin: 0.3, end: 1.0),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(value),
-            shape: BoxShape.circle,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMessageInput() {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      color: const Color(0xFF1A1F2F),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: _isLoading ? 'Waiting for response...' : 'Type a message...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              ),
-              enabled: !_isLoading,
-              onSubmitted: (_) => _sendMessage(),
-            ),
-          ),
-          const SizedBox(width: 8),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            child: IconButton(
-              icon: Icon(
-                _isLoading ? Icons.hourglass_empty : Icons.send,
-                color: _isLoading ? Colors.grey : Colors.blue,
-              ),
-              onPressed: _isLoading ? null : _sendMessage,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1F2F),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildOptionTile(
-              icon: Icons.delete_outline,
-              label: 'Clear Chat History',
-              color: Colors.red,
-              onTap: () {
-                Navigator.pop(context);
-                _refreshChat();
-              },
-            ),
-            _buildOptionTile(
-              icon: Icons.info_outline,
-              label: 'About ${widget.character.name}',
-              color: Colors.blue,
-              onTap: () {
-                Navigator.pop(context);
-                _showCharacterInfo();
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionTile({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(label, style: const TextStyle(color: Colors.white)),
-      onTap: onTap,
-    );
-  }
-
-  void _showCharacterInfo() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1F2F),
-        title: Text(
-          widget.character.name,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoRow('Gender', widget.character.gender),
-            _buildInfoRow('Voice', widget.character.voiceType),
-            _buildInfoRow('Personality', _getPersonalityType()),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(color: Colors.blue)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text('$label: ', style: const TextStyle(color: Colors.white70)),
-          Text(value, style: const TextStyle(color: Colors.white)),
-        ],
-      ),
-    );
-  }
-
-  String _getPersonalityType() {
-    switch (widget.character.id) {
-      case 'ai_1': return 'Calm & Supportive';
-      case 'ai_2': return 'Energetic & Motivating';
-      case 'ai_3': return 'Wise & Thoughtful';
-      case 'ai_4': return 'Gentle & Caring';
-      default: return 'Friendly';
-    }
   }
 }

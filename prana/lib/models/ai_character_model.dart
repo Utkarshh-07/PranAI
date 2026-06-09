@@ -1,4 +1,5 @@
 // lib/models/ai_character_model.dart
+import 'package:flutter/material.dart';
 
 class AICharacter {
   final String id;
@@ -26,6 +27,12 @@ class AICharacter {
     this.conversationsCount = 0,
     this.totalMinutes = 0,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  // Helper getters for UI
+  String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';
+  
+  Color get baseColorObj => Color(int.parse(baseColor.replaceFirst('#', '0xFF')));
+  Color get eyeColorObj => Color(int.parse(eyeColor.replaceFirst('#', '0xFF')));
 
   Map<String, dynamic> toJson() => {
     'id': id,

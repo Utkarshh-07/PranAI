@@ -35,8 +35,7 @@ class _ChatHubScreenState extends State<ChatHubScreen> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    // Wrap with ChangeNotifierProvider
-    return ChangeNotifierProvider(
+    return ChangeNotifierProvider<AIService>(
       create: (_) => AIService(),
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0F1E),
@@ -120,7 +119,7 @@ class _ChatHubScreenState extends State<ChatHubScreen> with TickerProviderStateM
               currentUserId: currentUserId,
               currentUserDocId: currentUserDocId,
             ),
-            const GroupsTab(), // No parameters - FIXED
+            const GroupsTab(),
             const AiTab(currentUserId: ''),
           ],
         ),

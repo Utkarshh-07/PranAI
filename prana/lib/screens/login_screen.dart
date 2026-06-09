@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool isTypingPassword = false;
   bool showPassword = false;
   bool isLoading = false;
+  bool isParentMode = false; // Added for parent/student toggle
   
   // Eye animation variables
   bool isBlinking = false;
@@ -72,11 +73,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _passwordFocus.addListener(() {
       setState(() {
         if (_passwordFocus.hasFocus) {
-          // Eyes look down when typing password
           eyeXOffset = 0;
           eyeYOffset = 5;
         } else {
-          // Eyes go back to normal
           eyeXOffset = 0;
           eyeYOffset = 0;
         }
@@ -118,7 +117,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       );
 
       if (user != null) {
-        Navigator.pushReplacementNamed(context, '/screening');
+        if (isParentMode) {
+          // Navigate to Parent Dashboard
+          Navigator.pushReplacementNamed(context, '/parent_dashboard');
+        } else {
+          // Navigate to Student Screening
+          Navigator.pushReplacementNamed(context, '/screening');
+        }
       }
     } catch (e) {
       String errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -143,7 +148,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       User? user = await authProvider.signInWithGoogle();
 
       if (user != null) {
-        Navigator.pushReplacementNamed(context, '/screening');
+        if (isParentMode) {
+          Navigator.pushReplacementNamed(context, '/parent_dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/screening');
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +174,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       User? user = await authProvider.signInAsGuest();
 
       if (user != null) {
-        Navigator.pushReplacementNamed(context, '/');
+        if (isParentMode) {
+          Navigator.pushReplacementNamed(context, '/parent_dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/');
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -362,7 +375,108 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       textAlign: TextAlign.center,
                     ),
                     
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
+                    
+                    // PARENT/STUDENT TOGGLE BUTTONS
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => isParentMode = false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: !isParentMode ? const Color(0xFFF9AA33) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.school,
+                                      size: 20,
+                                      color: !isParentMode ? Colors.white : Colors.white70,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Student',
+                                      style: TextStyle(
+                                        color: !isParentMode ? Colors.white : Colors.white70,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => isParentMode = true),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isParentMode ? const Color(0xFFF9AA33) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.family_restroom,
+                                      size: 20,
+                                      color: isParentMode ? Colors.white : Colors.white70,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Parent',
+                                      style: TextStyle(
+                                        color: isParentMode ? Colors.white : Colors.white70,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Info card for Parent Mode
+                    if (isParentMode)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Parent login gives you access to your child\'s wellness insights and daily summaries.',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 20),
                     
                     // Login Card
                     Container(
@@ -386,7 +500,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             controller: _emailController,
                             focusNode: _emailFocus,
                             decoration: InputDecoration(
-                              hintText: "Email",
+                              hintText: isParentMode ? "Parent Email" : "Email",
                               prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF4A6572)),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
@@ -400,7 +514,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           
                           const SizedBox(height: 20),
                           
-                          // Password Field (eyes look down when typing)
+                          // Password Field
                           TextField(
                             controller: _passwordController,
                             focusNode: _passwordFocus,
@@ -428,6 +542,26 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           
                           const SizedBox(height: 20),
                           
+                          // Demo Credentials Hint (Parent Mode)
+                          if (isParentMode)
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF9AA33).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Demo: parent@test.com / any password',
+                                style: TextStyle(
+                                  color: Color(0xFF4A6572),
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          
+                          const SizedBox(height: 20),
+                          
                           // Login Button
                           SizedBox(
                             width: double.infinity,
@@ -444,9 +578,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               ),
                               child: isLoading
                                   ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text(
-                                      "LOGIN",
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  : Text(
+                                      isParentMode ? "LOGIN AS PARENT" : "LOGIN",
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                     ),
                             ),
                           ),
@@ -490,9 +624,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           // Guest Mode
                           TextButton(
                             onPressed: isLoading ? null : _handleGuestLogin,
-                            child: const Text(
-                              "🌊 Continue as Guest",
-                              style: TextStyle(
+                            child: Text(
+                              isParentMode ? "🌊 Continue as Parent Guest" : "🌊 Continue as Guest",
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Color(0xFF4A6572),
                                 fontWeight: FontWeight.w600,

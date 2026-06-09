@@ -1,11 +1,10 @@
-// lib/screens/ai_chat/ai_chat_home.dart
+// lib/screens/ai_chat/ai_chat_home.dart (FIXED)
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/ai_service.dart';
 import '../../models/ai_character_model.dart';
 import 'ai_chat_interface.dart';
 import 'ai_character_creator.dart';
-import '../../widgets/animated_character.dart';
 
 class AIChatHome extends StatefulWidget {
   const AIChatHome({super.key});
@@ -17,7 +16,7 @@ class AIChatHome extends StatefulWidget {
 class _AIChatHomeState extends State<AIChatHome> {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+    return ChangeNotifierProvider<AIService>(
       create: (_) => AIService(),
       child: Scaffold(
         backgroundColor: const Color(0xFF0B0E17),
@@ -90,13 +89,13 @@ class AIFriendGrid extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(int.parse(friend.baseColor.replaceFirst('#', '0xFF'))).withOpacity(0.3),
+                  friend.baseColorObj.withOpacity(0.3),
                   const Color(0xFF7B68EE).withOpacity(0.3),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Color(int.parse(friend.baseColor.replaceFirst('#', '0xFF'))),
+                color: friend.baseColorObj,
                 width: 2,
               ),
             ),
@@ -109,7 +108,7 @@ class AIFriendGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        Color(int.parse(friend.baseColor.replaceFirst('#', '0xFF'))),
+                        friend.baseColorObj,
                         const Color(0xFF7B68EE),
                       ],
                     ),
@@ -117,7 +116,7 @@ class AIFriendGrid extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      friend.name[0].toUpperCase(),
+                      friend.initial,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 36,

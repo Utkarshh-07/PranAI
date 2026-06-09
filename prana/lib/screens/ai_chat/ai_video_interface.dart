@@ -1,4 +1,5 @@
 // lib/screens/ai_chat/ai_video_interface.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/ai_character_model.dart';
 import '../../widgets/animated_character.dart';
@@ -18,6 +19,8 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
   bool _isSpeakerOn = true;
   String _callDuration = "00:00";
   String _currentExpression = 'neutral';
+  Timer? _timer;
+  int _seconds = 0;
 
   @override
   void initState() {
@@ -25,11 +28,20 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
     _startCallTimer();
   }
 
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
   void _startCallTimer() {
-    Future.delayed(const Duration(seconds: 1), () {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
+        _seconds++;
+        final minutes = (_seconds ~/ 60).toString().padLeft(2, '0');
+        final secs = (_seconds % 60).toString().padLeft(2, '0');
         setState(() {
-          _callDuration = "00:01";
+          _callDuration = "$minutes:$secs";
         });
       }
     });
@@ -48,7 +60,7 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(int.parse(widget.character.baseColor.replaceFirst('#', '0xFF'))).withOpacity(0.7),
+                  widget.character.baseColorObj.withOpacity(0.7),
                   Colors.black,
                 ],
               ),
@@ -68,7 +80,7 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Color(int.parse(widget.character.baseColor.replaceFirst('#', '0xFF'))).withOpacity(0.5),
+                        color: widget.character.baseColorObj.withOpacity(0.5),
                         blurRadius: 30,
                         spreadRadius: 10,
                       ),
@@ -78,7 +90,7 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                     character: widget.character,
                     expression: _currentExpression,
                     isSpeaking: true,
-                    isListening: false, gender: '', baseColor: '', eyeColor: '',
+                    isListening: false,
                   ),
                 ),
                 
@@ -150,7 +162,9 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                 IconButton(
                   icon: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 28),
                   onPressed: () {
-                    // TODO: Implement camera flip
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Camera flip coming soon!')),
+                    );
                   },
                 ),
               ],
@@ -192,6 +206,9 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                         setState(() {
                           _isMuted = !_isMuted;
                         });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(_isMuted ? 'Microphone muted' : 'Microphone unmuted')),
+                        );
                       },
                     ),
                     
@@ -203,6 +220,9 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                         setState(() {
                           _isCameraOn = !_isCameraOn;
                         });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(_isCameraOn ? 'Video on' : 'Video off')),
+                        );
                       },
                     ),
                     
@@ -214,6 +234,9 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
                         setState(() {
                           _isSpeakerOn = !_isSpeakerOn;
                         });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(_isSpeakerOn ? 'Speaker on' : 'Speaker muted')),
+                        );
                       },
                     ),
                     
@@ -251,7 +274,7 @@ class _AIVideoInterfaceState extends State<AIVideoInterface> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected 
-              ? Color(int.parse(widget.character.baseColor.replaceFirst('#', '0xFF')))
+              ? widget.character.baseColorObj
               : Colors.black.withOpacity(0.5),
           shape: BoxShape.circle,
           border: Border.all(

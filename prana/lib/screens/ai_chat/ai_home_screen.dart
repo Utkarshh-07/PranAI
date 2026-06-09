@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../models/ai_character_model.dart';
 import 'ai_character_creator.dart';
-import 'ai_chat_interface.dart';
+import 'ai_chat_interface.dart' hide AICharacter;
 import '../../widgets/animated_character.dart';
 
 class AIHomeScreen extends StatefulWidget {

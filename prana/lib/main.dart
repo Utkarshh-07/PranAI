@@ -1,4 +1,4 @@
-// lib/main.dart
+// lib/main.dart (COMPLETE WORKING VERSION)
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,6 +14,7 @@ import 'package:prana/screens/parent_contact_screen.dart';
 import 'package:prana/screens/student_dashboard.dart';
 import 'package:prana/screens/mindfulness/mindfulness_home.dart';
 import 'package:prana/screens/parent/parent_dashboard.dart';
+import 'package:prana/screens/parent/parent_summary_screen.dart';
 import 'package:prana/screens/prankster_flow/level1_warning.dart';
 import 'package:prana/screens/prankster_flow/level2_winterfell.dart';
 import 'package:prana/screens/prankster_flow/level3_danger_zone.dart';
@@ -59,6 +60,14 @@ import 'package:prana/screens/ai_chat/ai_video_interface.dart' as video;
 // ===== FRIEND REQUEST SERVICE =====
 import 'package:prana/services/friend_request_service.dart';
 
+// ===== NOTIFICATION & SUMMARY SERVICES =====
+import 'package:prana/services/notification_service.dart';
+import 'package:prana/services/summary_scheduler.dart';
+import 'package:prana/services/parent_summary_service.dart';
+
+// ===== SETTINGS SCREENS =====
+import 'package:prana/screens/settings/notification_settings_screen.dart';
+
 // ===== FUNCTION TO CREATE TEST USERS =====
 Future<void> _createTestUsers() async {
   try {
@@ -68,7 +77,7 @@ Future<void> _createTestUsers() async {
     if (snapshot.docs.isEmpty) {
       print('📝 Creating test users...');
       
-      // Create Utkarsh
+      // Create Utkarsh (Student)
       await FirebaseFirestore.instance.collection('users').doc('user_utkarsh').set({
         'uid': 'user1',
         'username': 'Utkarsh',
@@ -76,12 +85,13 @@ Future<void> _createTestUsers() async {
         'email': 'utkarsh@test.com',
         'flow': 15,
         'isOnline': true,
+        'userType': 'student',
         'lastActive': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
       print('✅ Utkarsh created');
       
-      // Create Hardik
+      // Create Hardik (Student)
       await FirebaseFirestore.instance.collection('users').doc('user_hardik').set({
         'uid': 'user2',
         'username': 'Hardik',
@@ -89,12 +99,13 @@ Future<void> _createTestUsers() async {
         'email': 'hardik@test.com',
         'flow': 15,
         'isOnline': true,
+        'userType': 'student',
         'lastActive': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
       print('✅ Hardik created');
       
-      // Create Arya
+      // Create Arya (Student)
       await FirebaseFirestore.instance.collection('users').doc('user_arya').set({
         'uid': 'user3',
         'username': 'Arya',
@@ -102,10 +113,24 @@ Future<void> _createTestUsers() async {
         'email': 'arya@test.com',
         'flow': 7,
         'isOnline': false,
+        'userType': 'student',
         'lastActive': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
       print('✅ Arya created');
+      
+      // Create Parent User (linked to Utkarsh)
+      await FirebaseFirestore.instance.collection('users').doc('parent_utkarsh').set({
+        'uid': 'parent1',
+        'username': 'Parent',
+        'avatar': '👨‍👩‍👧',
+        'email': 'parent@test.com',
+        'userType': 'parent',
+        'linkedStudentId': 'user_utkarsh',
+        'linkedStudentName': 'Utkarsh',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ Parent user created');
       
       // Create a test chat between Utkarsh and Hardik
       await FirebaseFirestore.instance.collection('chats').doc('chat_utkarsh_hardik').set({
@@ -199,6 +224,19 @@ Future<void> _createTestUsers() async {
       });
       print('✅ Test friend request created');
       
+      // Add sample mood entries for testing summaries
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_utkarsh')
+          .collection('mood_entries')
+          .add({
+        'mood': 7,
+        'stress': 4,
+        'note': 'Felt good today',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      print('✅ Sample mood entries created');
+      
       print('🎉 All test data created successfully!');
       
     } else {
@@ -226,6 +264,14 @@ void main() async {
       ),
     );
     print('✅ Firebase initialized successfully');
+    
+    // Initialize Notification Service
+    await NotificationService().initialize();
+    print('✅ Notification Service initialized');
+    
+    // Start Summary Scheduler (for parent daily summaries)
+    SummaryScheduler().startScheduler();
+    print('✅ Summary Scheduler started');
     
     // CREATE TEST USERS AND DATA
     await _createTestUsers();
@@ -297,11 +343,17 @@ class PranaApp extends StatelessWidget {
           // ============ SHELL COLLECTION FEATURES ============
           '/shell_collection': (context) => ShellCollectionHome(),
           
-          // ============ PARENT ============
+          // ============ PARENT FEATURES ============
           '/parent_dashboard': (context) => const ParentDashboard(
                 parentEmail: '',
                 studentCode: '',
               ),
+          '/parent-summaries': (context) => ParentSummaryScreen(
+                parentId: 'parent_utkarsh',
+              ),
+          
+          // ============ SETTINGS ============
+          '/notification-settings': (context) => const NotificationSettingsScreen(),
         },
         
         // Handle routes with arguments
@@ -339,6 +391,16 @@ class PranaApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => StudentDashboard(
                 parentData: args is Map<String, dynamic> ? args : null,
+              ),
+            );
+          }
+          
+          // Parent Summary Screen with dynamic parent ID
+          if (settings.name == '/parent-summaries' && settings.arguments != null) {
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder: (context) => ParentSummaryScreen(
+                parentId: args?['parentId'] ?? 'parent_utkarsh',
               ),
             );
           }
