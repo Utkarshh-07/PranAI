@@ -1,10 +1,4 @@
-## ✅ **Systematically Arranged README.md**
 
-Here's your README completely reorganized with proper formatting:
-
----
-
-```markdown
 # 🌊 PranAI - AI Mental Wellness for Indian Students
 
 **PranAI means → "Intelligence that nurtures your life energy"**
