@@ -3,7 +3,7 @@
 
 **PranAI means → "Intelligence that nurtures your life energy"**
 
-> ⚠️ **Hackathon Submission Notice:** Demo/Prototype version for Vibe Coding Hackathon 2026. Full production version with real-time AI integration in development.
+> ⚠️ **Hackathon Submission Notice:** Demo/Prototype version for Hackathon. Full production version with real-time AI integration in development.
 
 <div align="center">
 
