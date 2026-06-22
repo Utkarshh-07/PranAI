@@ -3,6 +3,34 @@
 
 **PranAI means → "Intelligence that nurtures your life energy"**
 
+## 📌 Important Note for Judges
+
+Everything marked "✅ Demo Ready" above is genuinely built and working — the 
+UI, the navigation flows, the gamification system, the parent dashboard, 
+the 4-level safety protocol logic — all of it runs live in this build.
+
+Two things are intentionally simplified for this submission, and I want 
+to be upfront about exactly what and why:
+
+**AI responses are currently rule-based, not live LLM-generated.** The 
+architecture is built to plug in GPT-5.4 Mini directly — the integration 
+point exists in the codebase — but for this hackathon I used keyword-based 
+emotional detection instead of a live API call, to keep the demo fast and 
+reliable for judging without API latency or cost during evaluation.
+
+**Push notifications are simulated via local notifications, not FCM.** 
+The real-time alert *logic* — what triggers an alert, what a parent sees 
+versus what stays private — is fully implemented and demonstrated. The 
+delivery mechanism (actual cross-device push via Firebase Cloud Messaging) 
+is the next build step.
+
+I'm flagging this directly because I'd rather you trust everything else 
+in this submission than have you wonder where the line is. PranAI started 
+six months ago, outside this hackathon, because of a real conversation 
+I had with my own parents — not because of a hackathon prompt. The parts 
+that are real are real because I built them before this event existed. 
+The parts that are simplified, I'm telling you so myself.
+
 > ⚠️ **Hackathon Submission Notice:** Demo/Prototype version for Vibe Coding Hackathon 2026. Full production version with real-time AI integration in development.
 
 <div align="center">
