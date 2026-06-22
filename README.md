@@ -4,6 +4,7 @@
 > ⚠️ **Hackathon Submission Notice:** Demo/Prototype version for Vibe Coding Hackathon
 2026. Full production version with real-time AI integration in development.
 <div align="center">
+
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue)]()
 [![Firebase](https://img.shields.io/badge/Firebase-Demo-orange)]()
 [![Status](https://img.shields.io/badge/Status-Prototype-yellow)]()
