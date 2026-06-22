@@ -199,7 +199,7 @@ lib/
 
 ```bash
 git clone https://github.com/Utkarshh-07/PranAI.git
-cd PranAI
+cd prana
 flutter pub get
 flutter run
 ```
